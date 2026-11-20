@@ -21,6 +21,33 @@ per-channel scaling on the training segment and use the Weather
 chronological split. MSE and MAE are reported in the standardized space.
 The test set is evaluated using the checkpoint with lowest validation MSE.
 
+| Model | Test MSE | Test MAE | Trainable parameters | Training step |
+| --- | ---: | ---: | ---: | ---: |
+| Original PatchTST | 0.15022 | 0.19772 | 921,187 | 26.15 ms |
+| CST FFN output projections | 0.14972 | 0.19765 | 832,099 | 31.16 ms |
+
+The test errors were similar in this single-seed comparison. Trainable
+parameters fell by 9.7%, while the median training step was 19.2% longer.
+
+![Training and validation curves](results/learning-curves.png)
+
+[Experiment summary](results/summary.json) · [Epoch history](results/history.csv)
+
+## Inference
+
+The [Hugging Face weights](https://huggingface.co/takumiecd/cst-patchtst-weather)
+come from validation-selected checkpoints of a matching release rerun.
+The example returns 96 temperature forecasts in °C and the corresponding
+observations. To forecast from your own CSV with the same 21 Weather
+columns, omit `--test-index`; the CLI uses the latest 336 rows.
+
+```bash
+python -m pip install -r requirements.txt
+python infer.py data/weather.csv --variant cst --test-index 0
+```
+
+Set `--variant baseline` to compare, or `--device cuda` to use a CUDA build.
+
 ## Run
 
 Use a CUDA-enabled PyTorch installation. Obtain `weather.csv` from the
@@ -42,3 +69,6 @@ done
 Set `--pilot 25` with a fresh output directory to record 25 timed updates after
 eight warmup updates. See the [upstream license](upstream/LICENSE) for the
 vendored architecture.
+
+Export the trained pair with
+`python export.py --run output/weather --output output/weights`.
